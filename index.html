@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="BROK AI - Advanced Neural Studio for Chat and Image Generation">
+    <title>BROK AI | Neural Studio</title>
+
+    <!-- External Assets -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <script src="https://js.puter.com/v2/"></script>
+    <style>
+        :root {
+            --accent: #00f2ff;
+            --accent-glow: rgba(0, 242, 255, 0.3);
+            --glass: rgba(15, 20, 30, 0.8);
+            --border: rgba(255, 255, 255, 0.08);
+            --bg-dark: #020406;
+            --text-main: #e0e0e0;
+            --text-dim: #94a3b8;
+            --card-bg: rgba(255, 255, 255, 0.03);
+        }
+
+        body.red-theme {
+            --accent: #ff334b;
+            --accent-glow: rgba(255, 51, 75, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s ease;
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            overflow: hidden;
+            position: fixed;
+        }
+
+        #neuralCanvas {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
+        .home-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: flex-end;
+            z-index: 2010;
+        }
+
+        .theme-toggle-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-toggle-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        #homePage {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle at center, var(--accent-glow) 0%, #000 100%);
+            backdrop-filter: blur(25px);
+            padding: 20px;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .home-content {
+            text-align: center;
+            max-width: 480px;
+            width: 100%;
+        }
+
+        .glow-icon {
+            width: clamp(100px, 20vw, 130px);
+            height: clamp(100px, 20vw, 130px);
+            background: var(--card-bg);
+            border: 1px solid var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            box-shadow: 0 0 30px var(--accent-glow);
+            position: relative;
+        }
+
+        .glow-icon::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.9);
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1.3);
+                opacity: 0;
+            }
+        }
+
+        .glow-icon i {
+            font-size: clamp(40px, 10vw, 55px);
+            color: var(--accent);
+            filter: drop-shadow(0 0 15px var(--accent));
+            animation: core-spin 10s infinite linear;
+        }
+
+        @keyframes core-spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .main-title {
+            font-size: clamp(28px, 10vw, 56px);
+            font-weight: 800;
+            letter-spacing: -2px;
+            margin-bottom: 5px;
+            background: linear-gradient(180deg, #fff 30%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+        }
+
+        .sync-text {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            margin-bottom: 20px;
+            animation: breathe 3s infinite ease-in-out;
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 1;
+                letter-spacing: 4px;
+            }
+        }
+
+        .launch-btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px auto;
+            box-shadow: 0 10px 40px var(--accent-glow);
+            font-size: 14px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            width: auto;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            padding: clamp(20px, 5vw, 35px);
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            margin-top: 20px;
+            backdrop-filter: blur(15px);
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+            color: white;
+            border-radius: 12px;
+            font-size: 15px;
+        }
+
+        .app-frame {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-dark);
+            display: flex;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 100;
+            transition: opacity 0.5s ease;
+        }
+
+        @media (min-width: 1024px) {
+            .app-frame {
+                inset: 20px;
+                border-radius: 32px;
+                border: 1px solid var(--border);
+                overflow: hidden;
+            }
+        }
+
+        .app-visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .sidebar {
+            width: 280px;
+            border-right: 1px solid var(--border);
+            padding: 30px 20px;
+            display: flex;
+            flex-direction: column;
+            background: rgba(5, 8, 15, 0.95);
+            backdrop-filter: blur(25px);
+            z-index: 1001;
+        }
+
+        @media (max-width: 1023px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                left: -280px;
+                transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .sidebar.open {
+                left: 0;
+                box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+            }
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+        }
+
+        @media (max-width: 1023px) {
+            .sidebar-overlay.active {
+                display: block;
+            }
+        }
+
+        .logo {
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .logo-main {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent-glow);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
+
+        .nav-btn {
+            width: 100%;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            padding: 14px 18px;
+            border-radius: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .nav-btn.active {
+            background: var(--accent-glow);
+            color: var(--accent);
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #chatBox {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            scroll-behavior: smooth;
+        }
+
+        .bubble-wrapper {
+            display: flex;
+            flex-direction: column;
+            max-width: 90%;
+            animation: slide-up 0.3s ease-out;
+            position: relative;
+        }
+
+        .bubble-wrapper.user {
+            align-self: flex-end;
+        }
+
+        .bubble-wrapper.ai {
+            align-self: flex-start;
+        }
+
+        .bubble {
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.5;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .user .bubble {
+            background: var(--accent);
+            color: #000;
+            border-bottom-right-radius: 4px;
+        }
+
+        .ai .bubble {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+
+        .bubble-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+            opacity: 0;
+            transition: opacity 0.2s;
+            padding: 0 4px;
+        }
+
+        .bubble-wrapper:hover .bubble-actions {
+            opacity: 1;
+        }
+
+        .action-icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .action-icon-btn:hover {
+            color: var(--accent);
+        }
+
+        .image-container {
+            position: relative;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 512px;
+        }
+
+        .image-container img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            display: block;
+        }
+
+        .img-download-overlay {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .image-container:hover .img-download-overlay {
+            opacity: 1;
+        }
+
+        .img-btn {
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .img-btn:hover {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+
+        .input-container {
+            padding: 15px 20px 25px;
+        }
+
+        .input-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            margin-bottom: 10px;
+            display: flex;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 6px 12px;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #userInput {
+            flex: 1;
+            background: none;
+            border: none;
+            color: white;
+            padding: 10px;
+            font-size: 15px;
+        }
+
+        .action-btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 3000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(15px);
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: #080c14;
+            border: 1px solid var(--border);
+            padding: 30px;
+            border-radius: 28px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 14px 18px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            background: rgba(255, 51, 75, 0.1);
+            color: #ff334b;
+            border: 1px solid rgba(255, 51, 75, 0.2);
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .welcome-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .welcome-title {
+            font-weight: 900;
+            font-size: clamp(28px, 6vw, 42px);
+            background: linear-gradient(to bottom, #fff 20%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            line-height: 1.1;
+            margin-top: 20px;
+        }
+
+        .neural-orb {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .orb-outer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px dashed var(--accent);
+            border-radius: 50%;
+            animation: orb-rotate 8s linear infinite;
+            opacity: 0.5;
+        }
+
+        .orb-inner {
+            width: 30px;
+            height: 30px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: 0 0 30px var(--accent), 0 0 60px var(--accent-glow);
+            animation: orb-pulse 2s infinite ease-in-out;
+        }
+
+        @keyframes orb-rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes orb-pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.3);
+                opacity: 0.7;
+            }
+        }
+
+        .mobile-header {
+            display: none;
+            height: 60px;
+            background: rgba(5, 8, 15, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 20px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        @media (max-width: 1023px) {
+            .mobile-header {
+                display: flex;
+            }
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            padding: 10px 15px;
+        }
+
+        .typing-dots span {
+            width: 6px;
+            height: 6px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .typing-dots span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dots span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        #toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: #000;
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-weight: 700;
+            font-size: 13px;
+            z-index: 5000;
+            display: none;
+            box-shadow: 0 10px 30px var(--accent-glow);
+        }
+
+        @keyframes slide-up {
+            from {
+                transform: translateY(10px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="neuralCanvas"></canvas>
+    <div id="toast">Copied to Clipboard!</div>
+
+    <div id="homePage">
+        <header class="home-header">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" id="homeThemeToggle">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </header>
+
+        <div id="landingStep" class="home-content">
+            <div class="glow-icon"><i class="fa-solid fa-atom"></i></div>
+            <h1 class="main-title">BROK CORE</h1>
+            <div class="sync-text">SYNCING WITH YOUR DIGITAL CONSCIOUSNESS</div>
+            <button class="launch-btn" onclick="showAuth()">Get Started <i class="fa fa-arrow-right"></i></button>
+        </div>
+
+        <!-- LOGIN STEP -->
+        <div id="authStep" class="home-content" style="display:none;">
+            <h2 style="font-weight:800; margin-bottom:20px;">ACCESS TERMINAL</h2>
+
+            <div class="auth-card">
+                <input type="email" id="loginEmail" class="auth-input" placeholder="Neural ID / Email">
+
+                <input type="password" id="loginPass" class="auth-input" placeholder="Access Key">
+
+                <button class="launch-btn" style="width:100%; border-radius:12px;" onclick="loginUser()">
+                    Login
+                </button>
+
+                <button class="nav-btn" style="margin-top:18px; justify-content:center; font-size:12px; opacity:.7"
+                    onclick="openSignup()">
+                    Create New Account
+                </button>
+                <button class="nav-btn" style="margin-top:10px; justify-content:center; font-size:12px; opacity:.6"
+                    onclick="guestLogin()">
+                    Continue as Guest
+                </button>
+                <button class="nav-btn"
+                    style="margin-top:10px; justify-content:center; font-size:12px; color:var(--accent);"
+                    onclick="backToHome()">
+                    <i class="fa fa-chevron-left"></i> Back
+                </button>
+            </div>
+        </div>
+        <!-- SIGNUP STEP -->
+        <div id="signupStep" class="home-content" style="display:none;">
+            <h2 style="font-weight:800; margin-bottom:20px;">CREATE ACCOUNT</h2>
+
+            <div class="auth-card">
+                <input type="text" id="signupUsername" class="auth-input" placeholder="Username">
+
+                <input type="email" id="signupEmail" class="auth-input" placeholder="Email">
+
+                <input type="password" id="signupPass" class="auth-input" placeholder="Password">
+
+                <button class="launch-btn" style="width:100%; border-radius:12px;" onclick="signupUser()">
+                    Sign Up
+                </button>
+
+                <button class="nav-btn" style="margin-top:18px; justify-content:center; font-size:12px; opacity:.7"
+                    onclick="backToLogin()">
+                    Already have an account? Login
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-frame" id="appFrame">
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar(false)"></div>
+        <aside class="sidebar" id="mainSidebar">
+            <div class="logo">
+                <div class="logo-main">
+                    <div class="logo-icon"><i class="fa-solid fa-brain"></i></div><span>BROK AI</span>
+                </div>
+                <div class="logo-sub" style="font-size: 11px; color: var(--text-dim); margin-left: 44px;">Neural
+                    Studio
+                </div>
+            </div>
+            <nav class="nav-links">
+                <button class="nav-btn active" id="btn-chat" onclick="setMode('chat')"><i class="fa fa-message"></i>
+                    Neural Chat</button>
+                <button class="nav-btn" id="btn-image" onclick="setMode('image')"><i
+                        class="fa-solid fa-wand-magic-sparkles"></i> Image Studio</button>
+            </nav>
+            <div class="sidebar-footer" style="margin-top:auto">
+                <div id="limitDisplay"
+                    style="font-size:10px; font-weight:700; padding:10px 14px; color: var(--text-dim);">GUEST MODE
+                </div>
+                <button class="nav-btn" onclick="toggleSettings(true)"><i class="fa fa-gear"></i> Settings</button>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <header class="mobile-header">
+                <button class="nav-btn" style="width:auto; padding: 10px;" onclick="toggleSidebar(true)"><i
+                        class="fa-solid fa-bars"></i></button>
+                <span style="font-weight: 800; color: var(--accent);">BROK STUDIO</span>
+                <button class="nav-btn" style="width:auto; padding: 10px;" onclick="toggleSettings(true)"><i
+                        class="fa-solid fa-sliders"></i></button>
+            </header>
+
+            <div id="chatBox">
+                <div id="welcome" class="welcome-screen">
+                    <div class="neural-orb">
+                        <div class="orb-outer"></div>
+                        <div class="orb-inner"></div>
+                    </div>
+                    <h3 class="welcome-title">WELCOME TO<br>AI WORLD</h3>
+                    <p style="color:var(--text-dim); font-size: 14px; margin-top: 10px;">
+                        Digital intelligence initialized. Start your neural session.
+                    </p>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <input type="text" id="userInput" placeholder="text prompt..."
+                        autocomplete="off" onkeydown="if(event.key === 'Enter') handleMessage()">
+                    <button class="action-btn" onclick="handleMessage()" id="sendBtn"><i
+                            class="fa fa-arrow-up"></i></button>
+                </div>
+                <div style="text-align: center; font-size: 10px; color: var(--text-dim); opacity: 0.5;">Local
+                    Connection
+                    Active</div>
+            </div>
+        </main>
+    </div>
+
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3 style="margin-top:0">Settings</h3>
+            <div class="setting-row">
+                <span>Change Theme</span>
+                <button class="action-btn" style="width: auto; padding: 0 15px; border-radius: 8px;"
+                    onclick="toggleTheme()">Switch</button>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout & Home
+            </button>
+            <button class="launch-btn"
+                style="width:100%; border-radius:12px; background:rgba(255,255,255,0.1); color:white; margin-top: 10px;"
+                onclick="toggleSettings(false)">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Localhost Backend Configuration ---
+        const backendBaseUrl = "http://localhost:5000";
+        // Aapka local server address
+
+        // State Management
+        let chatCount = parseInt(localStorage.getItem('brok_count')) || 0;
+        let currentUser = localStorage.getItem('brok_active_user') || null;
+        let currentMode = 'chat';
+        let currentTheme = localStorage.getItem('brok_theme') || 'cyan';
+        let isProcessing = false;
+
+        // Background Animation
+        const canvas = document.getElementById('neuralCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        function initParticles() {
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+            particles = Array.from({ length: 40 }, () => ({
+                x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+                vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, size: Math.random() * 2 + 1
+            }));
+        }
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+            ctx.fillStyle = accentColor + '20';
+            particles.forEach(p => {
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+            });
+            requestAnimationFrame(animate);
+        }
+        window.addEventListener('resize', initParticles); initParticles(); animate();
+
+        // UI Helpers
+        window.toggleSidebar = (s) => {
+            document.getElementById('mainSidebar').classList.toggle('open', s);
+            document.getElementById('sidebarOverlay').classList.toggle('active', s);
+        };
+        window.toggleSettings = (s) => { document.getElementById('settingsModal').style.display = s ? 'flex' : 'none'; };
+        window.showAuth = () => {
+            document.getElementById('landingStep').style.display = 'none';
+            document.getElementById('authStep').style.display = 'block';
+        };
+        window.backToHome = () => {
+            document.getElementById('landingStep').style.display = 'block';
+            document.getElementById('authStep').style.display = 'none';
+        };
+        function openSignup() {
+            document.getElementById("authStep").style.display = "none";
+            document.getElementById("signupStep").style.display = "block";
+        }
+
+        function backToLogin() {
+            document.getElementById("signupStep").style.display = "none";
+            document.getElementById("authStep").style.display = "block";
+        }
+
+
+        window.handleAuth = (type) => {
+            const email = document.getElementById('homeEmail').value.trim();
+            const pass = document.getElementById('homePass').value.trim();
+
+            if (!email.includes('@')) { showToast("Invalid Neural ID"); return; }
+            if (pass.length < 4) { showToast("Access Key too short"); return; }
+
+            currentUser = email;
+            localStorage.setItem('brok_active_user', currentUser);
+
+            // Agar type 'signup' hai, to yahan API call bhi add kar sakte ho
+            // for example: fetch(`${backendBaseUrl}/signup`, {email, pass}) ...
+
+            startApp(); // Turant app (chat) me le jao
+        };
+        async function signupUser() {
+            const username = signupUsername.value.trim();
+            const email = signupEmail.value.trim();
+            const password = signupPass.value.trim();
+
+            if (!username || !email || !password)
+                return showToast("All fields required");
+
+            try {
+                const res = await fetch(`${backendBaseUrl}/signup`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await res.json();
+                if (!res.ok || data.success === false) {
+                    showToast(data.message);
+                    return;
+                }
+
+                localStorage.setItem("brok_active_user", email);
+                currentUser = email;
+
+                showToast("Account Created");
+                startApp();
+
+
+            } catch (e) {
+                showToast(e.message);
+            }
+        }
+
+        async function loginUser() {
+            const email = loginEmail.value.trim();
+            const password = loginPass.value.trim();
+
+            if (!email || !password) {
+                showToast("Fill all fields");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${backendBaseUrl}/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+                if (!res.ok || data.success === false) {
+                    showToast(data.message);
+                    return;
+                }
+
+                localStorage.setItem("brok_active_user", email);
+                currentUser = email;
+
+                showToast("Login Successful");
+                startApp();
+
+
+            } catch (err) {
+                showToast(err.message);
+            }
+        }
+
+
+        function guestLogin() {
+            currentUser = null;
+
+            // 🔥 reset guest chat count
+            chatCount = 0;
+            localStorage.setItem("brok_count", 0);
+
+            localStorage.removeItem("brok_active_user");
+
+            showToast("Guest Session Started (5 Free Chats)");
+            startApp();
+        }
+
+
+        window.startApp = () => {
+            document.getElementById('homePage').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('homePage').style.display = 'none';
+                document.getElementById('appFrame').classList.add('app-visible');
+            }, 500);
+            applyTheme(currentTheme);
+            updateUI();
+        };
+
+        window.logout = () => {
+            chatCount = 0;
+            localStorage.setItem("brok_count", 0);
+
+            localStorage.removeItem('brok_active_user');
+            currentUser = null;
+            document.getElementById('appFrame').classList.remove('app-visible');
+            document.getElementById('settingsModal').style.display = 'none';
+            const home = document.getElementById('homePage');
+            home.style.display = 'flex';
+            setTimeout(() => home.style.opacity = '1', 10);
+            document.getElementById('landingStep').style.display = 'block';
+            document.getElementById('authStep').style.display = 'none';
+            document.getElementById('chatBox').innerHTML = `
+                <div id="welcome" class="welcome-screen">
+                    <div class="neural-orb"><div class="orb-outer"></div><div class="orb-inner"></div></div>
+                    <h3 class="welcome-title">WELCOME TO<br>AI WORLD</h3>
+                    <p style="color:var(--text-dim); font-size: 14px; margin-top: 10px;">Digital intelligence initialized. Start your neural session.</p>
+                </div>`;
+            updateUI();
+        };
+
+        window.toggleTheme = () => {
+            currentTheme = currentTheme === 'cyan' ? 'red' : 'cyan';
+            applyTheme(currentTheme);
+        };
+
+        function applyTheme(t) {
+            document.body.className = t === 'red' ? 'red-theme' : '';
+            localStorage.setItem('brok_theme', t);
+            const icon = document.querySelector('#homeThemeToggle i');
+            if (icon) {
+                icon.className = t === 'red' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+            }
+        }
+
+        window.setMode = (m) => {
+            currentMode = m;
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${m}`).classList.add('active');
+            document.getElementById('userInput').placeholder = m === 'chat' ? 'text prompt' : 'image prompt...';
+            toggleSidebar(false);
+        };
+
+        window.updateUI = () => {
+            const ld = document.getElementById('limitDisplay');
+            ld.innerText = currentUser ? "PREMIUM ACTIVE" : `GUEST: ${Math.max(0, 5 - chatCount)} LEFT`;
+        };
+
+        // --- Handle Message Function for Localhost Connection ---
+        async function handleMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text || isProcessing) return;
+
+            // Guest limit check
+            if (!currentUser && chatCount >= 5) {
+                showToast("Guest limit reached. Please login.");
+                return;
+            }
+
+            input.value = "";
+            addMessage("user", text);
+            if (document.getElementById('welcome')) document.getElementById('welcome').style.display = 'none';
+
+            isProcessing = true;
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.disabled = true;
+            const lid = addLoading();
+
+            try {
+                // Backend calls
+                if (currentMode === 'chat') {
+                    // Endpoint: /chat
+                    const response = await fetch(`${backendBaseUrl}/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: text, userId: currentUser })
+                    });
+
+                    if (!response.ok) throw new Error("Server error");
+                    const data = await response.json();
+
+                    removeLoading(lid);
+                    // Ham assume kar rahe hain ki backend { reply: "..." } bhej raha hai
+                    const aiText = data.reply || "No response from local server.";
+                    addMessage("ai", aiText);
+                } else {
+
+                    try {
+                        // Puter.js image generation
+                        const imgEl = await puter.ai.txt2img(text, {
+                            width: 512,
+                            height: 512,
+                            samples: 1
+                        });
+
+                        removeLoading(lid);
+
+                        // AI message me image show karwana
+                        addMessage("ai", "", imgEl.src);
+
+                        if (!currentUser) {
+                            chatCount++;
+                            localStorage.setItem('brok_count', chatCount);
+                            updateUI();
+                        }
+
+                    } catch (err) {
+                        removeLoading(lid);
+                        addMessage("ai", `Error generating image: ${err.message}`);
+                    }
+                }
+
+
+                if (!currentUser) {
+                    chatCount++;
+                    localStorage.setItem('brok_count', chatCount);
+                    updateUI();
+                }
+            } catch (e) {
+                removeLoading(lid);
+                addMessage("ai", `Error: Backend se connect nahi ho paya (${e.message}). Make sure your local server is running on ${backendBaseUrl}`);
+            } finally {
+                isProcessing = false;
+                sendBtn.disabled = false;
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
+        }
+
+        function copyToClipboard(text) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast("Copied to Clipboard!");
+        }
+
+        function shareContent(text) {
+            if (navigator.share) {
+                navigator.share({ title: 'BROK AI', text: text }).catch(() => { });
+            } else {
+                copyToClipboard(text);
+                showToast("Link Copied!");
+            }
+        }
+
+        function downloadImage(dataUrl) {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `brok-ai-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Saving Image...");
+        }
+
+        function addMessage(role, text, imgUrl = null) {
+            const chatBox = document.getElementById('chatBox');
+            const wrapper = document.createElement('div');
+            wrapper.className = `bubble-wrapper ${role}`;
+
+            let bubbleHtml = `<div class="bubble">`;
+
+            if (role === "ai") {
+                bubbleHtml += marked.parse(text);
+            } else {
+                bubbleHtml += escapeHtml(text);
+            }
+
+            // Image show block
+            if (imgUrl) {
+                bubbleHtml += `
+            <div class="image-container">
+                <img src="${imgUrl}" alt="Generated Image"
+                     onerror="this.src='https://via.placeholder.com/512?text=Image+Error'">
+
+                    <div class="img-download-overlay">
+                    <button class="img-btn" onclick="downloadImage('${imgUrl}')">
+                     <i class="fa fa-download"></i>
+                    </button>
+                    <button class="img-btn" onclick="shareContent('${imgUrl}')">
+                    <i class="fa fa-share-nodes"></i>
+                    </button>
+                  </div>
+                </div>
+              `;
+            }
+
+            bubbleHtml += `</div>`;
+
+            wrapper.innerHTML = bubbleHtml;
+            chatBox.appendChild(wrapper);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function addLoading() {
+            const lid = 'l-' + Date.now();
+            const wrapper = document.createElement('div');
+            wrapper.className = `bubble-wrapper ai`; wrapper.id = lid;
+            wrapper.innerHTML = `<div class="bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+            document.getElementById('chatBox').appendChild(wrapper);
+            document.getElementById('chatBox').scrollTop = document.getElementById('chatBox').scrollHeight;
+            return lid;
+        }
+        function removeLoading(id) { const el = document.getElementById(id); if (el) el.remove(); }
+
+        if (currentUser) startApp();
+        applyTheme(currentTheme);
+    </script>
+</body>
+
+</html>
