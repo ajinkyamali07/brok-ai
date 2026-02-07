@@ -4,24 +4,53 @@ import axios from "axios";
 import dotenv from "dotenv";
 import sqlite3 from "sqlite3";
 import bcrypt from "bcrypt";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
 
 dotenv.config();
+if (!process.env.GROQ_API_KEY) {
+  console.error("❌ GROQ_API_KEY missing in environment variables");
+}
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-app.use(cors());
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type"]
+}));
+
 app.use(express.json());
 app.get("/", (req, res) => {
   res.send("Backend working ✅");
 });
-// Database connect
-const db = new sqlite3.Database("./users.db", (err) => {
-  if (err) console.log("DB Error:", err);
-  else console.log("✅ SQLite Database Connected");
+
+// Database connect (SAFE for Railway / Docker)
+// ===== SQLITE SAFE PATH (ESM + WINDOWS) =====
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const dbDir = path.join(__dirname, "db");
+
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const dbPath = path.join(dbDir, "users.db");
+
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error("DB Error:", err);
+  } else {
+    console.log("✅ SQLite Database Connected");
+  }
 });
+
 
 db.run(`
     CREATE TABLE IF NOT EXISTS users (
@@ -103,7 +132,7 @@ app.post("/login", async (req, res) => {
   }
 
   // DB se user fetch
-  db.get(`SELECT * FROM users WHERE email = ?`, [email], async (err, user) => {
+  db.get(`SELECT * FROM users WHERE email = ?`,[email.toLowerCase()], async (err, user) => {
     if (err) {
       console.error("DB Error:", err);
       return res.json({ success: false, message: "Server error" });

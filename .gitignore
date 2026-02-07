@@ -1,4 +1,10 @@
+# SQLite
+db/
+*.db
+
+# Env
 .env
-users.db
-node_modules
+
+# Node
+node_modules/
 
