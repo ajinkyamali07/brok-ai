@@ -880,7 +880,7 @@
 
     <script>
         // --- Localhost Backend Configuration ---
-        const backendBaseUrl = "https://brok-ai-production-f63a.up.railway.app";
+        const backendBaseUrl = "https://brok-ai-production-b525.up.railway.app";
         // Aapka local server address
 
         // State Management
@@ -1134,7 +1134,12 @@
                     const response = await fetch(`${backendBaseUrl}/chat`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: text, userId: currentUser })
+                        body: JSON.stringify({
+                            message: text,
+                            userId: currentUser,
+                            system: "Reply in the same language as the user"
+                        })
+
                     });
 
                     if (!response.ok) throw new Error("Server error");

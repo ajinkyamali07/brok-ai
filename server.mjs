@@ -8,7 +8,6 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-
 dotenv.config();
 if (!process.env.GROQ_API_KEY) {
   console.error("❌ GROQ_API_KEY missing in environment variables");
@@ -19,11 +18,13 @@ const PORT = process.env.PORT || 5000;
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST"],
-  allowedHeaders: ["Content-Type"]
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type"],
+  }),
+);
 
 app.use(express.json());
 app.get("/", (req, res) => {
@@ -50,7 +51,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
     console.log("✅ SQLite Database Connected");
   }
 });
-
 
 db.run(`
     CREATE TABLE IF NOT EXISTS users (
@@ -118,14 +118,22 @@ app.post("/signup", async (req, res) => {
         db.run(
           "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
           [username, email, hashedPassword],
-          () => {
+          (err) => {
+            if (err) {
+              console.error("INSERT ERROR:", err);
+              return res.status(500).json({
+                success: false,
+                message: "Signup failed",
+              });
+            }
+
             return res.json({
               success: true,
               message: "Signup successful",
             });
-          }
+          },
         );
-      }
+      },
     );
   } catch (err) {
     console.error("SIGNUP ERROR:", err);
@@ -149,53 +157,49 @@ app.post("/login", async (req, res) => {
 
   email = email.toLowerCase().trim();
 
-  db.get(
-    "SELECT * FROM users WHERE email = ?",
-    [email],
-    async (err, user) => {
-      if (err) {
-        console.error("DB Error:", err);
-        return res.status(500).json({
-          success: false,
-          message: "Server error",
-        });
-      }
+  db.get("SELECT * FROM users WHERE email = ?", [email], async (err, user) => {
+    if (err) {
+      console.error("DB Error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Server error",
+      });
+    }
 
-      if (!user) {
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid Email or Password",
+      });
+    }
+
+    try {
+      const match = await bcrypt.compare(password, user.password);
+
+      if (!match) {
         return res.status(401).json({
           success: false,
           message: "Invalid Email or Password",
         });
       }
 
-      try {
-        const match = await bcrypt.compare(password, user.password);
-
-        if (!match) {
-          return res.status(401).json({
-            success: false,
-            message: "Invalid Email or Password",
-          });
-        }
-
-        res.json({
-          success: true,
-          message: "Login successful",
-          user: {
-            id: user.id,
-            username: user.username,
-            email: user.email,
-          },
-        });
-      } catch (err) {
-        console.error("Bcrypt Error:", err);
-        return res.status(500).json({
-          success: false,
-          message: "Server error",
-        });
-      }
+      res.json({
+        success: true,
+        message: "Login successful",
+        user: {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        },
+      });
+    } catch (err) {
+      console.error("Bcrypt Error:", err);
+      return res.status(500).json({
+        success: false,
+        message: "Server error",
+      });
     }
-  );
+  });
 });
 
 // ======================= CHAT API (GROQ) =======================
@@ -210,25 +214,25 @@ app.post("/chat", async (req, res) => {
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
-        model: "llama3-8b-8192",
+        model: "llama-3.1-8b-instant",
         messages: [
           {
             role: "system",
             content:
-              "User jis language me baat kare, reply usi language me do. Hindi me bole to Hindi me jawab do."
+              "User jis language me baat kare, reply usi language me do. Hindi me bole to Hindi me jawab do.",
           },
           {
             role: "user",
-            content: message
-          }
-        ]
+            content: message,
+          },
+        ],
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-          "Content-Type": "application/json"
-        }
-      }
+          "Content-Type": "application/json",
+        },
+      },
     );
 
     const reply =
@@ -239,11 +243,10 @@ app.post("/chat", async (req, res) => {
   } catch (error) {
     console.error("Groq API Error:", error.response?.data || error.message);
     res.status(500).json({
-      reply: "Server error, AI response nahi aaya ❌"
+      reply: "Server error, AI response nahi aaya ❌",
     });
   }
 });
-
 
 // ======================= IMAGE API (FREE POLLINATIONS) =======================
 app.post("/generate-image", async (req, res) => {
@@ -297,7 +300,5 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
 });
-
-
 
 //VXSJBXKJBLISJLOJ;CHA
