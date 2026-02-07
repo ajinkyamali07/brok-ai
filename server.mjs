@@ -219,7 +219,7 @@ app.post("/chat", async (req, res) => {
           {
             role: "system",
             content:
-              "Reply in the same language as the user's message. Do not translate unless the user asks.",
+              "Always reply in English only, regardless of the user's language.",
           },
           {
             role: "user",
