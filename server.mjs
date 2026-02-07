@@ -62,112 +62,113 @@ db.run(`
 `);
 
 //sign up
-// ======================= SIGN UP =======================
-app.post("/signup", async (req, res) => {
+app.post("/signup", (req, res) => {
   const { username, email, password } = req.body;
 
-  // 1️⃣ Empty check
   if (!username || !email || !password) {
-    return res.json({ success: false, message: "All fields required" });
+    return res.status(400).json({ success: false, message: "All fields required" });
   }
 
-  // 2️⃣ Email format check
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return res.json({ success: false, message: "Invalid email format" });
+  if (!isValidEmail(email)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid email format"
+    });
   }
 
-  try {
-    // 3️⃣ Check email already exists in DB
-    db.get(
-      `SELECT id FROM users WHERE email = ?`,
-      [email],
-      async (err, row) => {
+  if (!isStrongPassword(password)) {
+    return res.status(400).json({
+      success: false,
+      message:
+        "Password must be 8+ chars, include uppercase, lowercase, number & special character"
+    });
+  }
+
+  // check duplicate email
+  db.get("SELECT * FROM users WHERE email = ?", [email], (err, row) => {
+    if (row) {
+      return res.status(400).json({
+        success: false,
+        message: "Email already registered"
+      });
+    }
+
+    // password hash (VERY IMPORTANT)
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
+    db.run(
+      "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+      [username, email, hashedPassword],
+      (err) => {
         if (err) {
-          console.error("DB Error:", err);
-          return res.json({ success: false, message: "Server error" });
+          return res.status(500).json({ success: false, message: "DB error" });
         }
-
-        if (row) {
-          return res.json({
-            success: false,
-            message: "Email already registered",
-          });
-        }
-
-        // 4️⃣ Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // 5️⃣ Insert user
-        db.run(
-          `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`,
-          [username, email.toLowerCase(), hashedPassword],
-          function (err) {
-            if (err) {
-              console.error("Insert Error:", err);
-              return res.json({ success: false, message: "Signup failed" });
-            }
-
-            res.json({
-              success: true,
-              message: "Signup successful",
-            });
-          },
-        );
-      },
+        res.json({ success: true });
+      }
     );
-  } catch (err) {
-    console.error("Signup Error:", err);
-    res.json({ success: false, message: "Server error" });
-  }
+  });
 });
 
-// login
-// ======================= LOGIN ENDPOINT =======================
+//login
 app.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
 
   if (!email || !password) {
-    return res.json({ success: false, message: "Email and password required" });
+    return res.status(400).json({
+      success: false,
+      message: "Email and password required",
+    });
   }
 
-  // DB se user fetch
-  db.get(`SELECT * FROM users WHERE email = ?`,[email.toLowerCase()], async (err, user) => {
-    if (err) {
-      console.error("DB Error:", err);
-      return res.json({ success: false, message: "Server error" });
-    }
+  email = email.toLowerCase().trim();
 
-    if (!user) {
-      return res.json({ success: false, message: "Invalid Email or Password" });
-    }
+  db.get(
+    "SELECT * FROM users WHERE email = ?",
+    [email],
+    async (err, user) => {
+      if (err) {
+        console.error("DB Error:", err);
+        return res.status(500).json({
+          success: false,
+          message: "Server error",
+        });
+      }
 
-    try {
-      // Password match check
-      const match = await bcrypt.compare(password, user.password);
-
-      if (!match) {
-        return res.json({
+      if (!user) {
+        return res.status(401).json({
           success: false,
           message: "Invalid Email or Password",
         });
       }
 
-      // Login success
-      res.json({
-        success: true,
-        message: "Login successful",
-        user: {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-        },
-      });
-    } catch (err) {
-      console.error("Bcrypt Compare Error:", err);
-      return res.json({ success: false, message: "Server error" });
+      try {
+        const match = await bcrypt.compare(password, user.password);
+
+        if (!match) {
+          return res.status(401).json({
+            success: false,
+            message: "Invalid Email or Password",
+          });
+        }
+
+        res.json({
+          success: true,
+          message: "Login successful",
+          user: {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+          },
+        });
+      } catch (err) {
+        console.error("Bcrypt Error:", err);
+        return res.status(500).json({
+          success: false,
+          message: "Server error",
+        });
+      }
     }
-  });
+  );
 });
 
 // ======================= CHAT API (GROQ) =======================
