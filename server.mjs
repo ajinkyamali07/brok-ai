@@ -202,31 +202,48 @@ app.post("/login", async (req, res) => {
 app.post("/chat", async (req, res) => {
   const { message } = req.body;
 
-  if (!message) return res.status(400).json({ reply: "Message missing ❌" });
+  if (!message) {
+    return res.status(400).json({ reply: "Message missing ❌" });
+  }
 
   try {
     const response = await axios.post(
       "https://api.groq.com/openai/v1/chat/completions",
       {
-        model: "llama-3.1-8b-instant",
-        messages: [{ role: "user", content: message }],
+        model: "llama3-8b-8192",
+        messages: [
+          {
+            role: "system",
+            content:
+              "User jis language me baat kare, reply usi language me do. Hindi me bole to Hindi me jawab do."
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ]
       },
       {
         headers: {
           Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-      },
+          "Content-Type": "application/json"
+        }
+      }
     );
 
-    res.json({
-      reply: response.data.choices[0].message.content,
-    });
+    const reply =
+      response.data?.choices?.[0]?.message?.content ||
+      "AI se response nahi mila 😢";
+
+    res.json({ reply });
   } catch (error) {
-    console.log("Groq API Error:", error.response?.data || error.message);
-    res.status(500).json({ reply: "AI response nahi mila ❌" });
+    console.error("Groq API Error:", error.response?.data || error.message);
+    res.status(500).json({
+      reply: "Server error, AI response nahi aaya ❌"
+    });
   }
 });
+
 
 // ======================= IMAGE API (FREE POLLINATIONS) =======================
 app.post("/generate-image", async (req, res) => {
