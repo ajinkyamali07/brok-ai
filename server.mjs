@@ -62,51 +62,78 @@ db.run(`
 `);
 
 //sign up
-app.post("/signup", (req, res) => {
-  const { username, email, password } = req.body;
+app.post("/signup", async (req, res) => {
+  try {
+    let { username, email, password } = req.body;
 
-  if (!username || !email || !password) {
-    return res.status(400).json({ success: false, message: "All fields required" });
-  }
-
-  if (!isValidEmail(email)) {
-    return res.status(400).json({
-      success: false,
-      message: "Invalid email format"
-    });
-  }
-
-  if (!isStrongPassword(password)) {
-    return res.status(400).json({
-      success: false,
-      message:
-        "Password must be 8+ chars, include uppercase, lowercase, number & special character"
-    });
-  }
-
-  // check duplicate email
-  db.get("SELECT * FROM users WHERE email = ?", [email], (err, row) => {
-    if (row) {
+    if (!username || !email || !password) {
       return res.status(400).json({
         success: false,
-        message: "Email already registered"
+        message: "All fields required",
       });
     }
 
-    // password hash (VERY IMPORTANT)
-    const hashedPassword = bcrypt.hashSync(password, 10);
+    email = email.toLowerCase().trim();
 
-    db.run(
-      "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
-      [username, email, hashedPassword],
-      (err) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid email format",
+      });
+    }
+
+    const passwordRegex =
+      /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must contain 1 uppercase, 1 number, 1 special character & min 8 chars",
+      });
+    }
+
+    db.get(
+      "SELECT id FROM users WHERE email = ?",
+      [email],
+      async (err, row) => {
         if (err) {
-          return res.status(500).json({ success: false, message: "DB error" });
+          console.error(err);
+          return res.status(500).json({
+            success: false,
+            message: "Server error",
+          });
         }
-        res.json({ success: true });
+
+        if (row) {
+          return res.status(409).json({
+            success: false,
+            message: "Email already registered",
+          });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        db.run(
+          "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+          [username, email, hashedPassword],
+          () => {
+            return res.json({
+              success: true,
+              message: "Signup successful",
+            });
+          }
+        );
       }
     );
-  });
+  } catch (err) {
+    console.error("SIGNUP ERROR:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
 });
 
 //login
@@ -240,6 +267,15 @@ app.post("/generate-image", async (req, res) => {
     return res.status(500).json({ error: "Puter.js image generation failed" });
   }
 });
+/// NEVER LIE
+app.use((err, req, res, next) => {
+  console.error("UNHANDLED ERROR:", err);
+  res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
+});
+
 // ======================= SERVER START =======================
 app.listen(PORT, () => {
   console.log(`✅ Server running on http://localhost:${PORT}`);
