@@ -1153,43 +1153,22 @@
 
                     try {
                         // Puter.js image generation
-                        const result = await puter.ai.txt2img(text, {
+                        const imgEl = await puter.ai.txt2img(text, {
                             width: 512,
                             height: 512,
                             samples: 1
                         });
 
-                        let imageUrl;
-
-                        // Case 1: Puter returns <img>
-                        if (result instanceof HTMLImageElement) {
-                            imageUrl = result.src;
-                        }
-
-                        // Case 2: Puter returns Blob
-                        else if (result instanceof Blob) {
-                            imageUrl = URL.createObjectURL(result);
-                        }
-
-                        // Case 3: Puter returns object with blob()
-                        else if (result?.blob) {
-                            const blob = await result.blob();
-                            imageUrl = URL.createObjectURL(blob);
-                        }
-
                         removeLoading(lid);
 
-                        // ✅ Show image in UI
-                        addMessage("ai", "Here is your generated image 👇", imageUrl);
+                        // AI message me image show karwana
+                        addMessage("ai", "", imgEl.src);
 
-                        // ✅ guest count
                         if (!currentUser) {
                             chatCount++;
                             localStorage.setItem('brok_count', chatCount);
                             updateUI();
                         }
-
-
                     } catch (err) {
                         removeLoading(lid);
                         addMessage("ai", `Error generating image: ${err.message}`);
@@ -1292,8 +1271,8 @@
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;"
-                    .replace(/"/g, "&quot;")
-                    .replace(/'/g, "&#039;");
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         function addLoading() {
