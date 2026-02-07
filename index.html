@@ -849,8 +849,8 @@
 
             <div class="input-container">
                 <div class="input-wrapper">
-                    <input type="text" id="userInput" placeholder="text prompt..."
-                        autocomplete="off" onkeydown="if(event.key === 'Enter') handleMessage()">
+                    <input type="text" id="userInput" placeholder="text prompt..." autocomplete="off"
+                        onkeydown="if(event.key === 'Enter') handleMessage()">
                     <button class="action-btn" onclick="handleMessage()" id="sendBtn"><i
                             class="fa fa-arrow-up"></i></button>
                 </div>
@@ -970,7 +970,17 @@
                     body: JSON.stringify({ username, email, password })
                 });
 
-                const data = await res.json();
+                const text = await res.text();
+                console.log("Signup RAW response:", text);
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (err) {
+                    showToast("Server response error");
+                    return;
+                }
+
                 if (!res.ok || data.success === false) {
                     showToast(data.message);
                     return;
@@ -982,11 +992,11 @@
                 showToast("Account Created");
                 startApp();
 
-
             } catch (e) {
-                showToast(e.message);
+                showToast("Network error");
             }
         }
+
 
         async function loginUser() {
             const email = loginEmail.value.trim();
